@@ -1,12 +1,16 @@
 #!/bin/bash
-#使用sudo chmod -R 777 xxx.sh 给当前的脚本执行的权限
-
+#使用  sudo chmod -R 777 /xxx/language-generate-master/produce.sh 给当前的脚本执行的权限
+# 获取当前脚本文件的绝对路径
+script_path=$(readlink -f "$0")
+# 提取当前文件所在的目录
+script_dir=$(dirname "$script_path")
+current_dir=$script_dir
 #读取CSV文件并且将其转为XML数据文件
-input_file='file.csv'
+input_file="$current_dir/翻译字符串-0313_v1.csv"
 #模板文件
-template_file='template.xml'
+template_file="$current_dir/template.xml"
 #生成的文件夹
-produce_file='produce'
+produce_file="$current_dir/produce"
 output_file_name="${produce_file}/international_writing.xml"
 
 
@@ -52,7 +56,7 @@ xml=$(cat $template_file | sed "s#<key>#$key#g;s#<ZH>#$zh#g;s#<english>#$en#g;")
 echo "$xml"
 fi
 first_line=false
-done < file.csv > $output_file_name
+done < $input_file > $output_file_name
 # 关闭CSV文件描述符
 exec 3<&-
 
@@ -73,10 +77,6 @@ echo $android_xml_srouce_header >> $android_zh_folder_path
 mkdir -p $android_en_folder
 echo $android_xml_header >> $android_en_folder_path
 echo $android_xml_srouce_header >> $android_en_folder_path
-
-
-echo "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>" > strings.xml
-echo "<resources>" >> strings.xml
 
 # 读取文件并生成国际化内容
 cat $output_file_name | while IFS= read -r line; do
