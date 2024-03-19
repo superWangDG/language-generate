@@ -48,15 +48,46 @@ IFS=',' read -r _ _ _ <&3
 # 初始化一个标志，表示是否已经处理过至少一行数据
 first_line=true
 
-# 读取 CSV 文件中的每一行，并生成 XML 内容
-while IFS=',' read -r key zh en; do
-if ! $first_line; then
-# 读取 XML 模板，并替换占位符  （| tr -d '\n'）删除格式中的换行符号
-xml=$(cat $template_file | sed "s#<key>#$key#g;s#<ZH>#$zh#g;s#<english>#$en#g;")
-echo "$xml"
-fi
+## 读取 CSV 文件中的每一行，并生成 XML 内容
+#while IFS=',' read -r key zh en; do
+#if ! $first_line; then
+## 读取 XML 模板，并替换占位符  （| tr -d '\n'）删除格式中的换行符号
+#xml=$(cat $template_file | sed "s#<key>#$key#g;s#<ZH>#$zh#g;s#<english>#$en#g;")
+#
+#xml=$(cat "$template_file" | sed "s#<key>#$key#g;s#<ZH>#$zh#g;s#<english>#$en#g;")
+#echo "$xml"
+#fi
+#first_line=false
+#done < $input_file > $output_file_name
+
+while read -r line; do
+    if ! $first_line; then
+        
+        if [[ $line =~ \"[^\"]+\"  ]]; then
+        # 判断当前行的数据是被 " 包含的内容
+            key=$(echo $line | cut -d',' -f1)
+            zh=$(echo $line | cut -d',' -f2)
+            en=$(echo $line | cut -d'"' -f2)
+#            echo "输出当前的内容:$en"
+            xml=$(cat "$template_file" | sed "s#<key>#$key#g;s#<ZH>#$zh#g;s#<english>#$en#g;")
+        else
+            # 将IFS设置为逗号，并使用read命令读取数据
+            IFS=',' read -ra data_array <<< "$line"
+            # 将数组的第一个元素赋值给变量data1，第二个元素赋值给变量data2，以此类推
+            key=${data_array[0]}
+            zh=${data_array[1]}
+            en=${data_array[2]}
+            xml=$(cat "$template_file" | sed "s#<key>#$key#g;s#<ZH>#$zh#g;s#<english>#$en#g;")
+        fi
+#        echo "输出关键词:$key,$zh,$en"
+        # 读取 XML 模板，并替换占位符
+        
+        echo "$xml"
+    fi
 first_line=false
-done < $input_file > $output_file_name
+done < "$input_file" > $output_file_name
+
+
 # 关闭CSV文件描述符
 exec 3<&-
 
