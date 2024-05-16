@@ -1,12 +1,13 @@
 # LanguageGenerate
 
 #### 介绍
-	CSV_To_iOS_And_Android_Localizable:文件夹中的的脚本适用于将Excel导出的CSV文件生成iOS和Android使用的多语言文件。
-	在Excel的模版需要与以下图片一致:
-	![多语言模版](Resource/WX20240515-195808.png)
-	iOS_Localizable_To_XML:文件夹的脚本适用于将iOS中的多语言文件转为Excel能够打开的XML格式的文件。
+    CSV_To_iOS_And_Android_Localizable:文件夹中的的脚本适用于将Excel导出的CSV文件生成iOS和Android使用的多语言文件。在Excel的模版需要与以下图片一致(表格的颜色没有影响主要是格式，1~2行用于生成Android的文件夹以及文件，3~4行用于生成iOS的文件夹以及文件。5行用于说明的属于一个占位行):
+![输入图片说明](Resource/WX20240515-195808.png)
+    iOS_Localizable_To_XML:文件夹的脚本适用于将iOS中的多语言文件转为Excel能够打开的XML格式的文件。
 
-	注意脚本的执行会将字符&转为^^,\n转为//n!
+    注意:
+        1.脚本的执行会将字符&转为^^,\n转为//n（其实并没有什么影响，转换完成后会转回原本的字符）。
+        2.脚本双击出现未知运行需要在“系统设置”->"隐私与安全性"中允许当前的脚本执行。
 
 #### 安装插件
 	
