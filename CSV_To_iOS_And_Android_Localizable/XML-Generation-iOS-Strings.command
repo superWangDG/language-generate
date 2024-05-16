@@ -49,11 +49,18 @@ if [ ! -f "$full_path" ]; then
     exit 1
 fi
 
+full_path_temp="${full_path}.tmp"
+# 查找原始文件中的特殊符号替换成为能够处理的符号
+sed 's/&/^^/g' "$full_path" > "$full_path_temp"
+sed 's/\\n/\/\/n/g' "$full_path_temp" > "${full_path}.n.tmp"
+mv "${full_path}.n.tmp" "$full_path_temp"
+
 # 插入数据到文件中 $1文件地址 $2需要插入的数据列表 $3文件下标索引(如果不是批量的情况传入参数0) $4是否是iOS多语言的生成(true 或 false)
 inset_string_to_flie() {
         # 初始化当前的文本
 #        echo "" > "$1"
-        echo "正在写入文件:$1，当前文件所属下标$3"
+#        echo "正在写入文件:$1，当前文件所属下标$3"
+        
         # 逐行读取文件内容
         while IFS= read -r line; do
             IFS=',' read -r -a line_fields <<< "$line"
@@ -93,13 +100,22 @@ inset_string_to_flie() {
             # 拼接数据
             echo "$content" >> "$1"
         done <<< "$2"
+        
+        out_file="$1"
+        # 将文件开头替换的字符串替换回原始的字符串
+        sed 's/\^\^/\&/g' "$out_file" > "$out_file.tmp"
+        mv "$out_file.tmp" "$out_file"
+        sed 's/\/\/n/\\n/g' "$out_file" > "${out_file}.n.tmp"
+        mv "${out_file}.n.tmp" "$out_file"
+        
+        echo "生成完成地址:$1"
 }
 
 
-android_folder_line=$(awk -F ',' 'NR==1 {print $0}' "$full_path")
-android_file_line=$(awk -F ',' 'NR==2 {print $0}' "$full_path")
-ios_folder_line=$(awk -F ',' 'NR==3 {print $0}' "$full_path")
-ios_file_line=$(awk -F ',' 'NR==4 {print $0}' "$full_path")
+android_folder_line=$(awk -F ',' 'NR==1 {print $0}' "$full_path_temp")
+android_file_line=$(awk -F ',' 'NR==2 {print $0}' "$full_path_temp")
+ios_folder_line=$(awk -F ',' 'NR==3 {print $0}' "$full_path_temp")
+ios_file_line=$(awk -F ',' 'NR==4 {print $0}' "$full_path_temp")
 
 IFS=',' read -r -a android_folders <<< "$android_folder_line"
 IFS=',' read -r -a android_files <<< "$android_file_line"
@@ -107,8 +123,8 @@ IFS=',' read -r -a ios_folders <<< "$ios_folder_line"
 IFS=',' read -r -a ios_files <<< "$ios_file_line"
 
 echo "开始生成android多语言文件"
-#echo "输出当前行的数据:$frist_line\n${parts[0]}"
-if [[ ${android_folders[0]} == "Android Folder Name" && ${android_files[0]} == "Android File Name" ]]; then
+
+if [[ "${android_folders[0]}" =~ "Android Folder Name" && "${android_files[0]}" =~ "Android File Name" ]]; then
     for ((i = 1; i < ${#android_folders[@]}; i++)); do
 #        echo "处理其他数据：${android_folders[i]},下标$i"
         #得到安卓文件夹的地址
@@ -119,7 +135,7 @@ if [[ ${android_folders[0]} == "Android Folder Name" && ${android_files[0]} == "
             mkdir -p "$android_folder"
         fi
         # 遍历循环将多语言的信息插入对应的文件中
-        data_resource=$(awk -F ',' 'NR>=6 {print $0}' "$full_path")
+        data_resource=$(awk -F ',' 'NR>=6 {print $0}' "${full_path_temp}")
         echo '<?xml version=\"1.0\" encoding=\"UTF-8\" ?>' > "$android_file"
         inset_string_to_flie "$android_file" "$data_resource" $i false
         echo '<resources>' >> "$android_file"
@@ -130,7 +146,7 @@ fi
 
 echo "开始生成iOS多语言文件"
 #echo "输出当前行的数据:$frist_line\n${parts[0]}"
-if [[ ${ios_folders[0]} == "iOS Folder Name" && ${ios_files[0]} == "iOS File Name" ]]; then
+if [[ ${ios_folders[0]} =~ "iOS Folder Name" && ${ios_files[0]} =~ "iOS File Name" ]]; then
     for ((i = 1; i < ${#ios_folders[@]}; i++)); do
         #得到iOS文件夹的地址
         ios_folder="$output_strings_dir/iOS/${ios_folders[i]}"
@@ -145,7 +161,7 @@ if [[ ${ios_folders[0]} == "iOS Folder Name" && ${ios_files[0]} == "iOS File Nam
         
         echo "" > $ios_file
         # 遍历循环将多语言的信息插入对应的文件中
-        data_resource=$(awk -F ',' 'NR>=6 {print $0}' "$full_path")
+        data_resource=$(awk -F ',' 'NR>=6 {print $0}' "${full_path_temp}")
         # 使用函数 插入数据源
         inset_string_to_flie "$ios_file" "$data_resource" $i true
     done
@@ -154,6 +170,8 @@ else
     echo "iOS 文件夹创建失败，格式错误。"
 fi
 
+# 删除临时文件
+rm "$full_path_temp"
 
 
 
